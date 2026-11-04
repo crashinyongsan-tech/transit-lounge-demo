@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>도착·회복 일정 자동 구성 (시제품) | 트랜짓라운지 용산</title>
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+  --bg: #eef1f5;
+  --panel: #ffffff;
+  --ink: #1b2333;
+  --muted: #5d6779;
+  --line: #d6dce6;
+  --accent: #1f4fd1;
+  --accent-ink: #ffffff;
+  --move: #3d63c9;
+  --rest: #1d8a78;
+  --proc: #8a3d6b;
+  --free: #c4860f;
+  --warn-bg: #fff3d6;
+  --warn-ink: #6b4500;
+  --field: #f6f8fb;
+}
+:root:not([data-theme="light"]) {}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121722;
+    --panel: #1b2230;
+    --ink: #e8ecf4;
+    --muted: #9aa5b8;
+    --line: #2f394d;
+    --accent: #7ea2ff;
+    --accent-ink: #0f1626;
+    --move: #7ea2ff;
+    --rest: #4fcdb6;
+    --proc: #d98ab9;
+    --free: #efb94a;
+    --warn-bg: #3a2f12;
+    --warn-ink: #f3d68f;
+    --field: #141a26;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121722;
+  --panel: #1b2230;
+  --ink: #e8ecf4;
+  --muted: #9aa5b8;
+  --line: #2f394d;
+  --accent: #7ea2ff;
+  --accent-ink: #0f1626;
+  --move: #7ea2ff;
+  --rest: #4fcdb6;
+  --proc: #d98ab9;
+  --free: #efb94a;
+  --warn-bg: #3a2f12;
+  --warn-ink: #f3d68f;
+  --field: #141a26;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Hiragino Sans", "PingFang SC", system-ui, sans-serif;
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; }
+h1 { font-size: 1.35rem; margin: 4px 0 4px; letter-spacing: -0.01em; }
+.lead { color: var(--muted); margin: 0 0 18px; font-size: 0.95rem; }
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.panel h2 { font-size: 1rem; margin: 0 0 12px; }
+label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+.field { margin-bottom: 12px; }
+input, select, button {
+  font: inherit;
+  color: var(--ink);
+}
+input[type="datetime-local"], input[type="number"], select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--field);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-height: 44px;
+}
+input:focus-visible, select:focus-visible, button:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.hint { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+button {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--field);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+details { margin-top: 4px; }
+summary { cursor: pointer; font-size: 0.9rem; min-height: 44px; display: flex; align-items: center; }
+.params { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.notes { margin: 0 0 14px; padding: 0; list-style: none; }
+.notes li {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+.notes li.info { background: var(--field); color: var(--muted); border: 1px solid var(--line); }
+
+/* customer card */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px 16px;
+}
+.card h2 { font-size: 1.2rem; margin: 0 0 10px; }
+.sum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.sum div { background: var(--field); border-radius: 10px; padding: 10px 12px; }
+.sum b { display: block; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.sum span { font-size: 0.8rem; color: var(--muted); }
+.day { font-weight: 700; margin: 16px 0 6px; font-size: 0.95rem; }
+ol.tl { list-style: none; margin: 0; padding: 0; }
+ol.tl li { display: grid; grid-template-columns: 3.6rem 1fr; gap: 10px; margin-bottom: 8px; }
+.tm { font-variant-numeric: tabular-nums; font-weight: 700; padding-top: 8px; }
+.bar {
+  border-left: 5px solid var(--c, var(--move));
+  background: var(--field);
+  border-radius: 0 10px 10px 0;
+  padding: 8px 12px;
+}
+.bar .nm { font-weight: 600; }
+.bar .du { font-size: 0.85rem; color: var(--muted); }
+li.mark .bar { background: transparent; border-left-style: dashed; border-left-color: var(--ink); padding: 8px 12px; }
+li.mark .nm { font-weight: 700; }
+.disc { margin: 16px 0 0; font-size: 0.8rem; color: var(--muted); }
+.proto { background: var(--field); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 0.85rem; color: var(--muted); margin: 0 0 14px; }
+.empty { color: var(--muted); padding: 24px 4px; text-align: center; }
+@media (max-width: 380px) { .row2, .params { grid-template-columns: 1fr; } }
+@media print {
+  .noprint { display: none !important; }
+  body { background: #fff; }
+  .card { border: none; }
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="noprint">
+    <h1>도착·회복 일정 자동 구성</h1>
+    <p class="lead">외국인 의료관광객의 항공 도착 시각을 넣으면 입국, 클리닉 시술, 회복, 출국까지의 일정을 시간표로 구성하고 시술 가능 시각과 자유 시간을 계산합니다.</p>
+    <p class="proto">시제품(샘플) 단계입니다. 입력된 값은 저장되지 않으며, 예시 일정은 가상의 데이터입니다. 개인정보는 입력하지 마세요.</p>
+
+    <section class="panel">
+      <h2>고객 정보</h2>
+      <div class="field">
+        <label for="arr">서울 도착(착륙) 일시</label>
+        <input type="datetime-local" id="arr">
+      </div>
+      <div class="field">
+        <label for="type">시술 유형</label>
+        <select id="type">
+          <option value="skin">피부 관리 (레이저·스킨부스터 등)</option>
+          <option value="inject">주사 (보톡스·필러 등)</option>
+          <option value="surgery">성형·수술</option>
+          <option value="none">시술 없음 (휴식·여행만)</option>
+        </select>
+      </div>
+      <div class="field" id="procField">
+        <label for="proc">시술 예약 일시</label>
+        <input type="datetime-local" id="proc">
+        <div class="hint">비워 두면 가장 빠르게 가능한 시각으로 계산합니다.</div>
+      </div>
+      <div class="field">
+        <label for="dep">출국(이륙) 일시</label>
+        <input type="datetime-local" id="dep">
+        <div class="hint">비워 두면 자유 시간 계산은 생략합니다.</div>
+      </div>
+      <div class="field">
+        <label for="lang">고객 안내 언어</label>
+        <select id="lang">
+          <option value="ko">한국어</option>
+          <option value="en">English</option>
+          <option value="ja">日本語</option>
+          <option value="zh">简体中文</option>
+        </select>
+      </div>
+
+      <details hidden>
+        <summary>시간 기준 수정 (분 단위)</summary>
+        <div class="hint">아래 기본값은 임의 추정치입니다. 실제 운영 경험에 맞게 고쳐 주세요.</div>
+        <div class="params">
+          <div><label for="p_immig">입국심사·수하물</label><input type="number" id="p_immig" min="0" step="5" value="60"></div>
+          <div><label for="p_arex">공항↔서울역 공항철도</label><input type="number" id="p_arex" min="0" step="5" value="60"></div>
+          <div><label for="p_toLounge">서울역→라운지</label><input type="number" id="p_toLounge" min="0" step="5" value="20"></div>
+          <div><label for="p_prep">샤워·준비</label><input type="number" id="p_prep" min="0" step="5" value="30"></div>
+          <div><label for="p_toClinic">라운지→클리닉</label><input type="number" id="p_toClinic" min="0" step="5" value="30"></div>
+          <div><label for="p_proc">시술 소요</label><input type="number" id="p_proc" min="0" step="5" value="60"></div>
+          <div><label for="p_back">클리닉→라운지</label><input type="number" id="p_back" min="0" step="5" value="30"></div>
+          <div><label for="p_rec">회복 휴식</label><input type="number" id="p_rec" min="0" step="5" value="120"></div>
+          <div><label for="p_loungeToStn">라운지→서울역(출국)</label><input type="number" id="p_loungeToStn" min="0" step="5" value="20"></div>
+          <div><label for="p_airportBefore">공항 도착~이륙 여유</label><input type="number" id="p_airportBefore" min="0" step="5" value="180"></div>
+        </div>
+      </details>
+
+      <div class="btns">
+        <button class="primary" id="sample" type="button">예시로 다시 채우기</button>
+        <button id="copy" type="button">일정 복사</button>
+        <button id="print" type="button">인쇄</button>
+      </div>
+    </section>
+
+    <ul class="notes" id="notes"></ul>
+  </div>
+
+  <section class="card" id="out" aria-live="polite"></section>
+  <p class="disc" style="margin-top:16px">표시된 시간은 일반적인 이동·휴식 시간을 가정한 예시값이며, 실제 서비스에서는 클리닉과 협의한 기준으로 조정됩니다. 문의: 트랜짓라운지 용산 · jessica@crash-in.com · crashin-yongsan.com/lounge</p>
+</main>
+
+<script>
+var LOC = { ko: "ko-KR", en: "en-US", ja: "ja-JP", zh: "zh-CN" };
+var T = {
+  ko: {
+    title: "서울 도착 후 일정 안내", total: "서울 체류 시간", free: "자유 시간", none: "-",
+    land: "도착 (착륙)", immig: "입국심사·수하물 수령", arex: "공항철도 → 서울역",
+    toLounge: "서울역 → 트랜짓라운지", prep: "샤워·준비", wait: "라운지 휴식",
+    toClinic: "클리닉으로 이동", proc: "시술", back: "클리닉 → 라운지", rec: "회복 휴식",
+    free_: "자유 시간 (식사·쇼핑·관광)", toStn: "라운지 → 서울역", arexOut: "서울역 → 공항 (공항철도)",
+    check: "공항 수속·보안검색", dep: "출국 (이륙)",
+    disc: "표시된 시간은 예상치입니다. 시술 및 의료 관련 안내는 반드시 클리닉의 안내를 따라 주세요."
+  },
+  en: {
+    title: "Your schedule in Seoul", total: "Time in Seoul", free: "Free time", none: "-",
+    land: "Landing", immig: "Immigration & baggage", arex: "Airport Railroad to Seoul Station",
+    toLounge: "Seoul Station → Transit Lounge", prep: "Shower & get ready", wait: "Rest at the lounge",
+    toClinic: "Travel to the clinic", proc: "Procedure", back: "Clinic → Lounge", rec: "Recovery rest",
+    free_: "Free time (meals, shopping, sightseeing)", toStn: "Lounge → Seoul Station", arexOut: "Seoul Station → Airport (AREX)",
+    check: "Airport check-in & security", dep: "Departure",
+    disc: "Times are estimates. For anything medical, please follow your clinic’s instructions."
+  },
+  ja: {
+    title: "ソウル滞在スケジュール", total: "ソウル滞在時間", free: "自由時間", none: "-",
+    land: "到着(着陸)", immig: "入国審査・手荷物受取", arex: "空港鉄道でソウル駅へ",
+    toLounge: "ソウル駅 → トランジットラウンジ", prep: "シャワー・身支度", wait: "ラウンジで休憩",
+    toClinic: "クリニックへ移動", proc: "施術", back: "クリニック → ラウンジ", rec: "回復の休憩",
+    free_: "自由時間(食事・買い物・観光)", toStn: "ラウンジ → ソウル駅", arexOut: "ソウル駅 → 空港(空港鉄道)",
+    check: "空港での手続き・保安検査", dep: "出発(離陸)",
+    disc: "表示の時間は目安です。施術や医療に関するご案内は、必ずクリニックの指示に従ってください。"
+  },
+  zh: {
+    title: "首尔行程安排", total: "在首尔的时间", free: "自由时间", none: "-",
+    land: "抵达(落地)", immig: "入境检查·领取行李", arex: "乘机场铁路前往首尔站",
+    toLounge: "首尔站 → Transit Lounge", prep: "淋浴·准备", wait: "在休息室休息",
+    toClinic: "前往诊所", proc: "美容项目", back: "诊所 → 休息室", rec: "恢复休息",
+    free_: "自由时间(用餐·购物·观光)", toStn: "休息室 → 首尔站", arexOut: "首尔站 → 机场(机场铁路)",
+    check: "机场值机·安检", dep: "出发(起飞)",
+    disc: "所示时间为预估。医疗相关事项请务必遵循诊所的指示。"
+  }
+};
+var TYPE_DEFAULTS = {
+  skin:    { proc: 60,  rec: 120 },
+  inject:  { proc: 30,  rec: 60 },
+  surgery: { proc: 180, rec: 240 },
+  none:    { proc: 0,   rec: 0 }
+};
+var COLORS = { move: "var(--move)", rest: "var(--rest)", proc: "var(--proc)", free: "var(--free)", mark: "var(--ink)" };
+var PARAMS = ["immig", "arex", "toLounge", "prep", "toClinic", "proc", "back", "rec", "loungeToStn", "airportBefore"];
+
+function $(id) { return document.getElementById(id); }
+function add(d, m) { return new Date(d.getTime() + m * 60000); }
+function parseDT(v) { return v ? new Date(v) : null; }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function hhmm(d) { return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+function dayKey(d) { return d.getFullYear() + "-" + d.getMonth() + "-" + d.getDate(); }
+function dayLabel(d, lang) {
+  return d.toLocaleDateString(LOC[lang], { month: "numeric", day: "numeric", weekday: "short" });
+}
+function dur(min, lang) {
+  min = Math.round(min);
+  var h = Math.floor(min / 60), m = min % 60;
+  if (lang === "ko") return (h ? h + "시간 " : "") + (m || !h ? m + "분" : "");
+  if (lang === "ja") return (h ? h + "時間" : "") + (m || !h ? m + "分" : "");
+  if (lang === "zh") return (h ? h + "小时" : "") + (m || !h ? m + "分钟" : "");
+  return (h ? h + " h " : "") + (m || !h ? m + " min" : "");
+}
+function readParams() {
+  var p = {};
+  PARAMS.forEach(function (k) {
+    var v = parseInt($("p_" + k).value, 10);
+    p[k] = isNaN(v) || v < 0 ? 0 : v;
+  });
+  return p;
+}
+
+function compute() {
+  var arr = parseDT($("arr").value);
+  if (!arr) return null;
+  var p = readParams();
+  var type = $("type").value;
+  var dep = parseDT($("dep").value);
+  var notes = [];
+  var ev = [{ key: "land", kind: "mark", s: arr, e: arr }];
+  var t = arr;
+
+  function push(key, kind, min) {
+    if (min <= 0) return;
+    var e = add(t, min);
+    ev.push({ key: key, kind: kind, s: t, e: e });
+    t = e;
+  }
+
+  if (dep && dep <= arr) { notes.push({ w: true, m: "출국 시각이 도착 시각보다 빠릅니다. 날짜를 확인해 주세요." }); dep = null; }
+
+  push("immig", "move", p.immig);
+  push("arex", "move", p.arex);
+  push("toLounge", "move", p.toLounge);
+  push("prep", "rest", p.prep);
+  var ready = t;
+
+  if (type !== "none") {
+    var earliest = add(ready, p.toClinic);
+    var ps = parseDT($("proc").value);
+    if (!ps) {
+      ps = earliest;
+      notes.push({ w: false, m: "시술 예약 시각이 없어 가장 빠른 가능 시각(" + dayLabel(earliest, "ko") + " " + hhmm(earliest) + ")으로 계산했습니다." });
+    } else if (ps < earliest) {
+      notes.push({ w: true, m: "시술 예약 시각이 너무 이릅니다. 가능한 가장 빠른 시각은 " + dayLabel(earliest, "ko") + " " + hhmm(earliest) + "입니다. 이 시각으로 계산했으니 클리닉과 조정이 필요합니다." });
+      ps = earliest;
+    }
+    var leave = add(ps, -p.toClinic);
+    if (leave > t) { ev.push({ key: "wait", kind: "rest", s: t, e: leave }); t = leave; }
+    push("toClinic", "move", p.toClinic);
+    push("proc", "proc", p.proc);
+    push("back", "move", p.back);
+    push("rec", "rest", p.rec);
+    if (type === "surgery") notes.push({ w: false, m: "성형·수술은 마취·경과 확인 때문에 당일 출국이 어려울 수 있습니다. 반드시 클리닉에 먼저 확인하세요." });
+  }
+
+  var restEnd = t;
+  var freeMin = null;
+  if (dep) {
+    var need = p.loungeToStn + p.arex + p.airportBefore;
+    var leaveLounge = add(dep, -need);
+    if (leaveLounge >= restEnd) {
+      freeMin = (leaveLounge - restEnd) / 60000;
+      if (freeMin > 0) ev.push({ key: "free_", kind: "free", s: restEnd, e: leaveLounge });
+      t = leaveLounge;
+    } else {
+      freeMin = 0;
+      var short = Math.round((restEnd - leaveLounge) / 60000);
+      notes.push({ w: true, m: "출국 전 일정이 " + dur(short, "ko") + " 부족합니다. 출국 시각을 늦추거나 회복 시간·시술을 줄여야 합니다." });
+      t = restEnd;
+    }
+    push("toStn", "move", p.loungeToStn);
+    push("arexOut", "move", p.arex);
+    push("check", "move", p.airportBefore);
+    ev.push({ key: "dep", kind: "mark", s: dep, e: dep });
+  }
+
+  return {
+    ev: ev, notes: notes, freeMin: freeMin,
+    totalMin: dep ? (dep - arr) / 60000 : null
+  };
+}
+
+function render() {
+  var lang = $("lang").value;
+  var L = T[lang];
+  var out = $("out");
+  var notesEl = $("notes");
+  $("procField").style.display = $("type").value === "none" ? "none" : "";
+  var r = compute();
+  notesEl.innerHTML = "";
+  if (!r) {
+    out.innerHTML = '<div class="empty">도착 일시를 입력하면 일정이 여기에 나타납니다.</div>';
+    return;
+  }
+  r.notes.forEach(function (n) {
+    var li = document.createElement("li");
+    if (!n.w) li.className = "info";
+    li.textContent = n.m;
+    notesEl.appendChild(li);
+  });
+
+  var html = '<h2>' + L.title + '</h2>';
+  if (r.totalMin !== null) {
+    html += '<div class="sum"><div><b>' + dur(r.totalMin, lang) + '</b><span>' + L.total + '</span></div>' +
+            '<div><b>' + (r.freeMin ? dur(r.freeMin, lang) : L.none) + '</b><span>' + L.free + '</span></div></div>';
+  }
+  var cur = "";
+  html += '<ol class="tl">';
+  r.ev.forEach(function (e) {
+    var dk = dayKey(e.s);
+    if (dk !== cur) {
+      cur = dk;
+      html += '</ol><div class="day">' + dayLabel(e.s, lang) + '</div><ol class="tl">';
+    }
+    var isMark = e.kind === "mark";
+    var du = isMark ? "" : '<div class="du">' + dur((e.e - e.s) / 60000, lang) + '</div>';
+    html += '<li class="' + (isMark ? "mark" : "") + '"><span class="tm">' + hhmm(e.s) + '</span>' +
+            '<div class="bar" style="--c:' + COLORS[e.kind] + '"><div class="nm">' + L[e.key] + '</div>' + du + '</div></li>';
+  });
+  html += '</ol><p class="disc">' + L.disc + '</p>';
+  out.innerHTML = html;
+}
+
+function asText() {
+  var r = compute();
+  if (!r) return "";
+  var lang = $("lang").value, L = T[lang];
+  var lines = [L.title];
+  if (r.totalMin !== null) {
+    lines.push(L.total + ": " + dur(r.totalMin, lang));
+    if (r.freeMin) lines.push(L.free + ": " + dur(r.freeMin, lang));
+  }
+  var cur = "";
+  r.ev.forEach(function (e) {
+    var dk = dayKey(e.s);
+    if (dk !== cur) { cur = dk; lines.push("", "[" + dayLabel(e.s, lang) + "]"); }
+    var d = e.kind === "mark" ? "" : " (" + dur((e.e - e.s) / 60000, lang) + ")";
+    lines.push(hhmm(e.s) + "  " + L[e.key] + d);
+  });
+  lines.push("", L.disc);
+  return lines.join("\n");
+}
+
+function applyTypeDefaults() {
+  var d = TYPE_DEFAULTS[$("type").value];
+  $("p_proc").value = d.proc;
+  $("p_rec").value = d.rec;
+}
+
+function fillSample() {
+  $("arr").value = "2026-11-26T07:40";
+  $("type").value = "skin";
+  applyTypeDefaults();
+  $("proc").value = "2026-11-26T13:00";
+  $("dep").value = "2026-11-26T23:50";
+  render();
+}
+
+document.addEventListener("input", render);
+$("type").addEventListener("change", function () { applyTypeDefaults(); render(); });
+$("sample").addEventListener("click", fillSample);
+$("print").addEventListener("click", function () { window.print(); });
+$("copy").addEventListener("click", function () {
+  var txt = asText();
+  var btn = $("copy");
+  function done(ok) {
+    var old = "일정 복사";
+    btn.textContent = ok ? "복사됨" : "복사 실패";
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  }
+  if (!txt) { done(false); return; }
+  try {
+    navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(false); });
+  } catch (err) { done(false); }
+});
+fillSample();
+</script>
+</body>
+</html>
